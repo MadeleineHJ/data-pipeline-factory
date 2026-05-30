@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Pipeline Factory · Madeleine Hammad</title>
+<style>
+/* ============================================================
+   Data Pipeline Factory — Stylesheet
+   Warm editorial / technical palette
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=IBM+Plex+Mono:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:        #FFFFFF;
+  --bg2:       #F4F6F8;
+  --bg3:       #EDF0F3;
+  --surface:   #FFFFFF;
+  --peach:     #EDC7B7;
+  --peach-dk:  #E0A98F;
+  --gray:      #BAB2B5;
+  --gray-lt:   #D4CDD0;
+  --navy:      #123C69;
+  --navy-lt:   #1d5090;
+  --navy-dk:   #0d2c4d;
+  --raspberry: #AC3B61;
+  --rasp-lt:   #c44d77;
+  --bronze:    #B07A45;
+  --silver:    #8A95A3;
+  --gold:      #C98A2E;
+  --text:      #1c2433;
+  --text2:     #3f4656;
+  --text3:     #756a72;
+
+  --serif: 'Playfair Display', Georgia, serif;
+  --mono:  'IBM Plex Mono', ui-monospace, monospace;
+  --sans:  'Jost', system-ui, sans-serif;
+
+  --shadow:    0 2px 18px rgba(18,60,105,0.08);
+  --shadow-md: 0 8px 32px rgba(18,60,105,0.12);
+  --shadow-lg: 0 18px 56px rgba(18,60,105,0.16);
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --maxw: 1180px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--raspberry); color: var(--bg); }
+
+a { color: inherit; }
+code { font-family: var(--mono); color: var(--raspberry); font-size: 0.92em; }
+
+/* subtle grain / vignette under everything */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(900px 600px at 85% -5%, rgba(172,59,97,0.06), transparent 60%),
+    radial-gradient(800px 700px at 0% 30%, rgba(18,60,105,0.05), transparent 55%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── REVEAL ── */
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+.reveal.in { opacity: 1; transform: none; }
+.reveal.d1 { transition-delay: 0.08s; }
+.reveal.d2 { transition-delay: 0.16s; }
+.reveal.d3 { transition-delay: 0.24s; }
+.reveal.d4 { transition-delay: 0.32s; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1 !important; transform: none !important; }
+  * { animation: none !important; }
+}
+
+/* icons */
+.ic { width: 22px; height: 22px; display: block; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.ic-lg { width: 26px; height: 26px; }
+
+/* ============================================================
+   NAV
+   ============================================================ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(14px) saturate(1.1);
+  border-bottom: 1px solid rgba(186,178,181,0.35);
+  padding: 15px clamp(24px, 5vw, 64px);
+  display: flex; align-items: center; justify-content: space-between;
+  transition: padding 0.3s var(--ease), box-shadow 0.3s var(--ease), background 0.3s var(--ease);
+}
+nav.scrolled { padding-top: 11px; padding-bottom: 11px; box-shadow: 0 4px 24px rgba(18,60,105,0.07); }
+
+.nav-logo {
+  font-family: var(--serif); font-size: 17px; color: var(--navy); font-weight: 600;
+  display: flex; align-items: center; gap: 10px; letter-spacing: 0.01em;
+}
+.nav-logo .mark {
+  width: 26px; height: 26px; border-radius: 7px;
+  background: var(--navy); color: var(--peach);
+  display: grid; place-items: center; flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(237,199,183,0.25);
+}
+.nav-logo .mark svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.7; }
+
+.nav-links { display: flex; gap: clamp(18px, 2.4vw, 34px); list-style: none; align-items: center; }
+.nav-links a {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--text3); text-decoration: none; transition: color 0.2s; position: relative; padding: 4px 0;
+}
+.nav-links a::after {
+  content: ''; position: absolute; left: 0; bottom: 0; height: 1.5px; width: 0;
+  background: var(--raspberry); transition: width 0.25s var(--ease);
+}
+.nav-links a:hover { color: var(--navy); }
+.nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+.nav-links a.active { color: var(--navy); }
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero {
+  position: relative; z-index: 1;
+  min-height: 78vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: clamp(120px, 18vh, 200px) clamp(24px, 5vw, 64px) 80px;
+  max-width: 1080px; margin: 0 auto;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--raspberry); margin-bottom: 26px; display: flex; align-items: center; gap: 14px;
+}
+.hero-eyebrow::before { content: ''; width: 30px; height: 2px; background: var(--raspberry); }
+
+.hero-title {
+  font-family: var(--serif); font-size: clamp(42px, 5.4vw, 76px); line-height: 1.04;
+  color: var(--navy); margin-bottom: 26px; letter-spacing: -0.01em; font-weight: 600;
+}
+.hero-title em { font-style: italic; color: var(--raspberry); font-weight: 500; }
+
+.hero-body {
+  font-size: clamp(15px, 1.15vw, 17.5px); color: var(--text2); line-height: 1.8;
+  max-width: 480px; margin-bottom: 34px; font-weight: 300;
+}
+.hero-body b { color: var(--navy); font-weight: 500; }
+
+.hero-tags { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 40px; }
+.tag {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
+  padding: 6px 13px; border-radius: 4px; font-weight: 400; line-height: 1;
+  display: inline-flex; align-items: center; gap: 6px; transition: transform 0.18s var(--ease);
+}
+.tag:hover { transform: translateY(-2px); }
+.tag .dt { width: 5px; height: 5px; border-radius: 50%; }
+.tag.navy { background: var(--navy); color: var(--bg); }
+.tag.navy .dt { background: var(--peach); }
+.tag.rasp { background: var(--raspberry); color: var(--bg); }
+.tag.rasp .dt { background: var(--peach); }
+.tag.outline { border: 1px solid var(--gray); color: var(--text3); background: transparent; }
+.tag.outline .dt { background: var(--gray); }
+
+/* hero stat row */
+.hero-stats { display: flex; gap: 32px; flex-wrap: wrap; }
+.hero-stat { display: flex; flex-direction: column; gap: 2px; }
+.hero-stat .n {
+  font-family: var(--serif); font-size: 38px; color: var(--navy); line-height: 1; font-weight: 600;
+}
+.hero-stat .n em { font-style: italic; color: var(--raspberry); }
+.hero-stat .l {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text3); margin-top: 7px;
+}
+.hero-stat + .hero-stat { padding-left: 32px; border-left: 1px solid rgba(186,178,181,0.5); }
+
+/* ── HERO VISUAL: animated pipeline ── */
+.hero-visual { position: relative; }
+.pipe {
+  background: var(--surface);
+  border: 1px solid rgba(186,178,181,0.5);
+  border-radius: 16px; padding: 26px 24px 22px;
+  box-shadow: var(--shadow-lg);
+  position: relative; overflow: hidden;
+}
+.pipe::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, var(--navy), var(--raspberry) 60%, var(--peach));
+}
+.pipe-head {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+}
+.pipe-head .t {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3);
+}
+.pipe-dots { display: flex; gap: 6px; }
+.pipe-dots i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+.pipe-dots i:nth-child(1){ background: var(--raspberry); }
+.pipe-dots i:nth-child(2){ background: var(--peach-dk); }
+.pipe-dots i:nth-child(3){ background: var(--gray); }
+
+.pipe-flow { display: flex; flex-direction: column; gap: 0; }
+.pnode {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 14px; border-radius: 11px; background: var(--bg);
+  border: 1px solid rgba(186,178,181,0.45); position: relative;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+.pnode.lit { box-shadow: var(--shadow-md); border-color: var(--peach-dk); transform: translateX(6px); }
+.pnode .pico {
+  width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0;
+  color: var(--navy); background: rgba(18,60,105,0.09);
+}
+.pnode:nth-child(odd) .pico { color: var(--raspberry); background: rgba(172,59,97,0.10); }
+.pnode .pinfo { flex: 1; min-width: 0; }
+.pnode .pname { font-family: var(--mono); font-size: 12.5px; color: var(--navy); font-weight: 500; }
+.pnode .prole { font-size: 11.5px; color: var(--text3); margin-top: 1px; }
+.pnode .ptech {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text3); padding: 3px 8px; border-radius: 20px; background: rgba(186,178,181,0.22); white-space: nowrap;
+}
+.pconn { height: 14px; margin-left: 32px; width: 2px; background: rgba(186,178,181,0.55); position: relative; }
+.pconn::after {
+  content: ''; position: absolute; left: -2px; top: -4px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--raspberry); opacity: 0; transform: translateY(0);
+}
+.pconn.flow::after { animation: flowDot 1.4s var(--ease); }
+@keyframes flowDot {
+  0% { opacity: 0; top: -4px; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; top: 16px; }
+}
+
+/* floating caption chip on hero visual */
+.pipe-caption {
+  margin-top: 18px; padding-top: 16px; border-top: 1px dashed rgba(186,178,181,0.6);
+  display: flex; align-items: center; gap: 10px;
+}
+.pipe-caption .pill {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--raspberry);
+  background: rgba(172,59,97,0.10); padding: 4px 9px; border-radius: 5px; font-weight: 500;
+}
+.pipe-caption .txt { font-size: 12px; color: var(--text3); }
+
+.hero-scroll {
+  position: absolute; left: clamp(24px, 5vw, 64px); bottom: 26px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text3); display: flex; align-items: center; gap: 10px;
+}
+.hero-scroll .ln { width: 40px; height: 1px; background: var(--text3); position: relative; overflow: hidden; }
+.hero-scroll .ln::after { content: ''; position: absolute; inset: 0; background: var(--raspberry); animation: scrollLn 2.2s var(--ease) infinite; }
+@keyframes scrollLn { 0% { transform: translateX(-100%);} 60%,100% { transform: translateX(100%);} }
+
+/* ============================================================
+   LAYOUT / SECTIONS
+   ============================================================ */
+.content { position: relative; z-index: 1; max-width: var(--maxw); margin: 0 auto; padding: 0 clamp(24px, 5vw, 64px) 110px; }
+
+.section { padding: clamp(72px, 9vh, 104px) 0 36px; border-top: 1px solid rgba(186,178,181,0.4); }
+
+.section-label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--raspberry); margin-bottom: 16px; display: flex; align-items: center; gap: 14px;
+}
+.section-label .num { font-weight: 500; }
+.section-label::after { content: ''; flex: 0 0 auto; width: 42px; height: 1px; background: var(--raspberry); opacity: 0.5; }
+
+.section-title {
+  font-family: var(--serif); font-size: clamp(28px, 3.4vw, 46px); color: var(--navy);
+  line-height: 1.1; margin-bottom: 22px; max-width: 720px; font-weight: 600; letter-spacing: -0.01em;
+}
+.section-title em { font-style: italic; color: var(--raspberry); font-weight: 500; }
+.section-lead {
+  font-size: clamp(15px, 1.1vw, 17px); color: var(--text2); max-width: 660px; line-height: 1.8;
+  margin-bottom: 52px; font-weight: 300;
+}
+
+/* ============================================================
+   HIGH-LEVEL ARCHITECTURE — 8-stage flow
+   ============================================================ */
+.add-source {
+  display: flex; flex-direction: column; gap: 4px; margin: 30px 0 40px;
+  background: var(--surface); border: 1px solid rgba(186,178,181,0.5); border-left: 4px solid var(--raspberry);
+  border-radius: 0 14px 14px 0; padding: 26px 30px 28px; box-shadow: var(--shadow);
+}
+.add-source-head {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--raspberry); margin-bottom: 16px; font-weight: 500;
+}
+.add-source-steps { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.add-source-steps li { display: flex; gap: 16px; align-items: flex-start; }
+.add-source-steps .as-n {
+  font-family: var(--mono); font-size: 13px; font-weight: 600; flex-shrink: 0;
+  width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+  background: rgba(18,60,105,0.09); color: var(--navy);
+}
+.add-source-steps .as-t { font-size: 14.5px; color: var(--text2); line-height: 1.6; padding-top: 2px; }
+.add-source-steps .as-t b { color: var(--navy); font-weight: 600; }
+.add-source-steps .as-t code { font-size: 12.5px; }
+
+.hla {
+  background: var(--surface); border: 1px solid rgba(186,178,181,0.5); border-radius: 18px;
+  padding: 34px 32px 36px; box-shadow: var(--shadow-md); position: relative; overflow: hidden;
+}
+.hla::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 70px; height: 1px; z-index: 0;
+  background: repeating-linear-gradient(90deg, rgba(186,178,181,0.4) 0 8px, transparent 8px 16px);
+}
+.hla-top { margin-bottom: 26px; position: relative; z-index: 1; }
+.hla-title {
+  font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--navy); letter-spacing: 0.01em;
+}
+.hla-sub { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+.hla-row {
+  display: flex; align-items: stretch; gap: 6px; position: relative; z-index: 1;
+  overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin;
+}
+.hla-card {
+  flex: 1 1 116px; min-width: 112px; border-radius: 16px; padding: 22px 12px 20px;
+  display: flex; flex-direction: column; align-items: center; text-align: center; color: #fff;
+  background: linear-gradient(165deg, var(--c1), var(--c2));
+  box-shadow: 0 10px 24px -8px var(--c2); transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease);
+}
+.hla-card:hover { transform: translateY(-5px); box-shadow: 0 18px 34px -10px var(--c2); }
+.hla-tile {
+  width: 54px; height: 54px; border-radius: 15px; background: #fff; display: grid; place-items: center;
+  margin-bottom: 16px; box-shadow: 0 5px 14px rgba(15,30,55,0.18);
+}
+.hla-tile svg { width: 27px; height: 27px; stroke: var(--ic); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.hla-name { font-family: var(--sans); font-weight: 600; font-size: 13.5px; line-height: 1.25; margin-bottom: 9px; }
+.hla-desc { font-family: var(--mono); font-size: 10px; line-height: 1.5; letter-spacing: 0.01em; color: rgba(255,255,255,0.85); }
+.hla-arrow {
+  flex: 0 0 auto; align-self: center; color: var(--gray); font-size: 15px; padding: 0 1px; user-select: none;
+}
+@media (max-width: 900px) {
+  .hla { padding: 26px 20px 28px; }
+  .hla-row { gap: 4px; }
+  .hla-arrow { display: none; }
+  .hla-card { flex: 0 0 132px; }
+}
+
+/* ============================================================
+   ARCHITECTURE — flow diagram
+   ============================================================ */
+.arch-flow {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 0 0 40px;
+  background: var(--surface); border: 1px solid rgba(186,178,181,0.5); border-radius: 16px;
+  overflow: hidden; box-shadow: var(--shadow-md);
+}
+.arch-col {
+  padding: 30px 18px 26px; border-right: 1px solid rgba(186,178,181,0.3);
+  display: flex; flex-direction: column; align-items: center; gap: 13px; text-align: center;
+  position: relative; transition: background 0.25s var(--ease);
+}
+.arch-col:last-child { border-right: none; }
+.arch-col:hover { background: rgba(237,199,183,0.14); }
+.arch-col::after {
+  content: ''; position: absolute; right: -7px; top: 76px; width: 14px; height: 14px; z-index: 2;
+  background: var(--surface); border-right: 1.6px solid var(--peach-dk); border-top: 1.6px solid var(--peach-dk);
+  transform: rotate(45deg);
+}
+.arch-col:last-child::after { display: none; }
+.arch-col-icon {
+  width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; color: var(--navy);
+  transition: transform 0.3s var(--ease);
+}
+.arch-col:hover .arch-col-icon { transform: translateY(-3px) scale(1.04); }
+.arch-col-icon.c1 { background: rgba(18,60,105,0.10); }
+.arch-col-icon.c2 { background: rgba(172,59,97,0.10); color: var(--raspberry); }
+.arch-col-icon.c3 { background: rgba(18,60,105,0.08); }
+.arch-col-icon.c4 { background: rgba(172,59,97,0.08); color: var(--raspberry); }
+.arch-col-icon.c5 { background: rgba(176,122,69,0.13); color: var(--bronze); }
+.arch-col-phase {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text3);
+}
+.arch-col-name { font-size: 14px; font-weight: 600; color: var(--navy); line-height: 1.25; }
+.arch-col-tech { font-family: var(--mono); font-size: 10px; color: var(--raspberry); line-height: 1.5; }
+
+/* the "three files" thesis block */
+.thesis {
+  display: grid; grid-template-columns: 1fr 1.15fr; gap: 0; margin: 8px 0 0;
+  background: var(--navy); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-md);
+  position: relative;
+}
+.thesis::before {
+  content: ''; position: absolute; bottom: -80px; right: -60px; width: 320px; height: 320px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(172,59,97,0.28), transparent 68%); pointer-events: none;
+}
+.thesis-left { padding: 40px 40px 40px; position: relative; }
+.thesis-kicker {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--peach); margin-bottom: 14px;
+}
+.thesis-h {
+  font-family: var(--serif); font-size: clamp(24px, 2.5vw, 32px); color: var(--bg); line-height: 1.15; margin-bottom: 16px; font-weight: 500;
+}
+.thesis-h em { font-style: italic; color: var(--peach); }
+.thesis-p { font-size: 14px; color: rgba(238,226,220,0.78); line-height: 1.75; max-width: 380px; }
+.thesis-right {
+  background: var(--navy-dk); padding: 32px 34px; display: flex; flex-direction: column; gap: 14px; position: relative;
+}
+.tfile { display: flex; align-items: center; gap: 14px; }
+.tfile .tn {
+  font-family: var(--mono); font-size: 13px; font-weight: 600; width: 30px; height: 30px; border-radius: 8px;
+  display: grid; place-items: center; flex-shrink: 0; background: rgba(237,199,183,0.14); color: var(--peach);
+}
+.tfile .tbody { flex: 1; min-width: 0; }
+.tfile .tpath { font-family: var(--mono); font-size: 12px; color: var(--bg); word-break: break-all; }
+.tfile .tdesc { font-size: 11.5px; color: rgba(238,226,220,0.6); margin-top: 1px; }
+.tfile .trepo {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 5px; white-space: nowrap; flex-shrink: 0;
+}
+.trepo.r1 { background: rgba(237,199,183,0.16); color: var(--peach); }
+.trepo.r2 { background: rgba(172,59,97,0.28); color: #f0b9cb; }
+.tfile-conn { margin-left: 14px; width: 2px; height: 10px; background: rgba(237,199,183,0.25); }
+
+/* ============================================================
+   STEPS (execution lifecycle)
+   ============================================================ */
+.lifecycle { display: grid; grid-template-columns: 248px 1fr; gap: 48px; align-items: start; }
+.lc-rail { position: sticky; top: 96px; display: flex; flex-direction: column; gap: 4px; }
+.lc-tab {
+  display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: center;
+  padding: 12px 14px; border-radius: 10px; cursor: pointer; text-align: left; border: none; background: transparent;
+  font-family: var(--sans); color: var(--text3); transition: background 0.22s var(--ease), color 0.22s var(--ease);
+  width: 100%;
+}
+.lc-tab:hover { background: rgba(255,255,255,0.5); }
+.lc-tab.active { background: var(--surface); box-shadow: var(--shadow); color: var(--navy); }
+.lc-tab .lcn {
+  font-family: var(--mono); font-size: 12px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(186,178,181,0.3); color: var(--text3); transition: all 0.22s var(--ease); font-weight: 500;
+}
+.lc-tab.active .lcn { background: var(--raspberry); color: var(--bg); }
+.lc-tab .lct { font-size: 13.5px; font-weight: 500; line-height: 1.3; }
+
+.lc-panels { position: relative; min-height: 340px; }
+.lc-panel {
+  background: var(--surface); border: 1px solid rgba(186,178,181,0.5); border-radius: 16px;
+  padding: 36px 38px; box-shadow: var(--shadow-md);
+  display: none; animation: panelIn 0.5s var(--ease);
+}
+.lc-panel.show { display: block; }
+@keyframes panelIn { from { opacity: 0; transform: translateY(14px);} to { opacity: 1; transform: none; } }
+.lc-panel .pn {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--raspberry); margin-bottom: 12px;
+}
+.lc-panel .ph { font-family: var(--serif); font-size: clamp(22px,2.2vw,28px); color: var(--navy); margin-bottom: 16px; line-height: 1.18; font-weight: 500; }
+.lc-panel .pp { font-size: 15px; color: var(--text2); line-height: 1.75; max-width: 560px; margin-bottom: 22px; }
+.lc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em;
+  padding: 5px 11px; border-radius: 5px;
+}
+.chip.navy { background: rgba(18,60,105,0.10); color: var(--navy); }
+.chip.rasp { background: rgba(172,59,97,0.10); color: var(--raspberry); }
+.chip .dt { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.lc-code {
+  font-family: var(--mono); font-size: 12.5px; color: var(--peach); background: var(--navy);
+  padding: 16px 18px; border-radius: 10px; margin: 4px 0 22px; line-height: 1.9; border-left: 3px solid var(--raspberry);
+}
+.lc-code .cm { color: rgba(237,199,183,0.55); }
+
+/* ============================================================
+   REPOS
+   ============================================================ */
+.repos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.repo {
+  background: var(--surface); border: 1px solid rgba(186,178,181,0.5); border-radius: 16px; overflow: hidden;
+  box-shadow: var(--shadow); transition: box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
+  display: flex; flex-direction: column;
+}
+.repo:hover { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+.repo-stripe { height: 4px; width: 100%; }
+.repo-stripe.navy { background: var(--navy); }
+.repo-stripe.rasp { background: var(--raspberry); }
+.repo-stripe.dual { background: linear-gradient(90deg, var(--navy) 50%, var(--raspberry) 50%); }
+.repo-inner { padding: 24px 24px 26px; display: flex; flex-direction: column; flex: 1; }
+.repo-icon-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.repo-icon2 { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0; color: var(--navy); }
+.repo-icon2.n { background: rgba(18,60,105,0.10); }
+.repo-icon2.r { background: rgba(172,59,97,0.10); color: var(--raspberry); }
+.repo-icon2.d { background: rgba(176,122,69,0.13); color: var(--bronze); }
+.repo-url { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.02em; word-break: break-all; }
+.repo-name2 { font-family: var(--serif); font-size: 21px; color: var(--navy); margin-bottom: 9px; font-weight: 600; }
+.repo-desc2 { font-size: 13px; color: var(--text2); line-height: 1.65; margin-bottom: 18px; }
+.repo-rule {
+  font-family: var(--mono); font-size: 11px; color: var(--raspberry); background: rgba(172,59,97,0.08);
+  padding: 9px 12px; border-radius: 6px; margin-bottom: 18px; font-weight: 500; line-height: 1.4;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.repo-rule svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; stroke: currentColor; fill: none; stroke-width: 1.7; }
+.repo-files2 { display: flex; flex-direction: column; gap: 4px; margin-top: auto; }
+.repo-file2 { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 9px; padding: 2px 0; }
+.repo-file2 .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gray); flex-shrink: 0; }
+.repo-file2.key { color: var(--navy); font-weight: 500; }
+.repo-file2.key .dot { background: var(--raspberry); }
+
+/* ============================================================
+   MEDALLION
+   ============================================================ */
+.medallion { display: flex; flex-direction: column; gap: 14px; }
+.medal-layer {
+  display: grid; grid-template-columns: 5px 150px 1fr auto; align-items: center; gap: 22px;
+  background: var(--surface); border: 1px solid rgba(186,178,181,0.45); border-radius: 13px; padding: 22px 26px;
+  box-shadow: var(--shadow); transition: box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.medal-layer:hover { box-shadow: var(--shadow-md); transform: translateX(5px); }
+.medal-bar { width: 5px; align-self: stretch; min-height: 50px; border-radius: 3px; }
+.medal-bar.raw { background: var(--gray); }
+.medal-bar.bronze { background: var(--bronze); }
+.medal-bar.silver { background: var(--silver); }
+.medal-bar.gold { background: var(--gold); }
+.medal-name { font-family: var(--mono); font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.medal-name .mdot { width: 8px; height: 8px; border-radius: 50%; }
+.medal-layer.raw .medal-name { color: var(--text3); } .medal-layer.raw .mdot { background: var(--gray); }
+.medal-layer.bronze .medal-name { color: var(--bronze); } .medal-layer.bronze .mdot { background: var(--bronze); }
+.medal-layer.silver .medal-name { color: var(--silver); } .medal-layer.silver .mdot { background: var(--silver); }
+.medal-layer.gold .medal-name { color: var(--gold); } .medal-layer.gold .mdot { background: var(--gold); }
+.medal-title2 { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+.medal-title2 .plan { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(201,138,46,0.4); padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+.medal-desc2 { font-size: 13px; color: var(--text2); font-weight: 300; line-height: 1.6; }
+.schema-fields { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.schema-fields code {
+  font-family: var(--mono); font-size: 10.5px; color: var(--navy); background: rgba(18,60,105,0.07);
+  border: 1px solid rgba(18,60,105,0.12); padding: 3px 9px; border-radius: 5px; line-height: 1.3;
+}
+.schema-fields code:nth-child(3) { color: var(--raspberry); background: rgba(172,59,97,0.08); border-color: rgba(172,59,97,0.18); }
+.medal-dataset { font-family: var(--mono); font-size: 11px; color: var(--navy); background: rgba(18,60,105,0.09); padding: 6px 13px; border-radius: 20px; white-space: nowrap; }
+
+/* ============================================================
+   CI/CD
+   ============================================================ */
+.ci-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 28px; }
+.ci-card { background: var(--surface); border: 1px solid rgba(186,178,181,0.5); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+.ci-head { padding: 18px 26px; display: flex; align-items: center; gap: 14px; }
+.ci-head.navy { background: var(--navy); }
+.ci-head.rasp { background: var(--raspberry); }
+.ci-head .badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--peach); }
+.ci-head.rasp .badge { color: rgba(238,226,220,0.8); }
+.ci-head .h { font-size: 17px; font-weight: 600; color: #fff; margin-top: 3px; }
+.ci-head .ico { margin-left: auto; color: rgba(237,199,183,0.6); }
+.ci-head.rasp .ico { color: rgba(238,226,220,0.55); }
+.ci-body { padding: 24px 26px; }
+.ci-step { display: flex; gap: 13px; align-items: flex-start; padding: 7px 0; }
+.ci-step .si { font-family: var(--mono); font-size: 11px; color: var(--raspberry); width: 18px; flex-shrink: 0; font-weight: 500; padding-top: 1px; }
+.ci-step .st { font-size: 13px; color: var(--text2); line-height: 1.55; }
+.ci-step .st code { font-size: 12px; }
+.ci-runs { margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(186,178,181,0.6); font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--text3); text-transform: uppercase; }
+
+.callout2 {
+  border-left: 4px solid var(--raspberry); background: rgba(172,59,97,0.06); padding: 20px 26px; border-radius: 0 10px 10px 0;
+  font-size: 15px; color: var(--text2); line-height: 1.7; display: flex; gap: 14px; align-items: flex-start;
+}
+.callout2 strong { color: var(--raspberry); font-weight: 600; }
+.callout2 svg { width: 22px; height: 22px; flex-shrink: 0; stroke: var(--raspberry); fill: none; stroke-width: 1.6; margin-top: 1px; }
+.callout2 .flow-line { font-family: var(--mono); font-size: 13px; color: var(--navy); }
+
+/* ============================================================
+   COMPARE
+   ============================================================ */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.compare-panel { background: var(--surface); border: 1px solid rgba(186,178,181,0.5); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+.compare-head { padding: 20px 26px; border-bottom: 1px solid rgba(186,178,181,0.3); display: flex; align-items: center; gap: 13px; }
+.compare-badge2 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 12px; border-radius: 5px; font-weight: 500; }
+.compare-badge2.portfolio { background: var(--peach); color: var(--navy); }
+.compare-badge2.company { background: var(--navy); color: var(--bg); }
+.compare-panel-title { font-size: 15px; font-weight: 600; color: var(--navy); }
+.compare-item { display: grid; grid-template-columns: 122px 1fr; gap: 16px; padding: 13px 26px; border-bottom: 1px solid rgba(186,178,181,0.15); align-items: start; }
+.compare-item:last-child { border-bottom: none; }
+.ci-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em; color: var(--text3); text-transform: uppercase; padding-top: 2px; }
+.ci-val { font-size: 13px; color: var(--text2); line-height: 1.55; }
+.ci-val strong { color: var(--navy); font-weight: 600; }
+.compare-panel.cost-portfolio .compare-item:last-child .ci-val strong { color: #2f7d4f; }
+
+/* ============================================================
+   NEXT STEPS
+   ============================================================ */
+.next-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.next-card {
+  position: relative; background: var(--surface); border: 1px solid rgba(186,178,181,0.5);
+  border-radius: 16px; padding: 32px 30px 30px; box-shadow: var(--shadow);
+  transition: box-shadow 0.3s var(--ease), transform 0.3s var(--ease); overflow: hidden;
+}
+.next-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, var(--navy), var(--raspberry));
+}
+.next-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+.next-num {
+  position: absolute; top: 24px; right: 28px; font-family: var(--serif); font-size: 44px;
+  font-weight: 600; color: rgba(18,60,105,0.10); line-height: 1;
+}
+.next-icon {
+  width: 50px; height: 50px; border-radius: 13px; display: grid; place-items: center;
+  background: rgba(172,59,97,0.10); color: var(--raspberry); margin-bottom: 18px;
+}
+.next-h { font-family: var(--serif); font-size: 22px; color: var(--navy); font-weight: 600; margin-bottom: 12px; }
+.next-p { font-size: 14.5px; color: var(--text2); line-height: 1.7; margin-bottom: 20px; max-width: 460px; }
+@media (max-width: 900px) {
+  .next-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  position: relative; z-index: 1;
+  background: var(--navy); color: rgba(238,226,220,0.7); padding: 56px clamp(24px,5vw,64px);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 28px;
+  overflow: hidden;
+}
+footer::before { content: ''; position: absolute; top: -90px; left: -40px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(172,59,97,0.22), transparent 68%); pointer-events: none; }
+.footer-left { font-family: var(--serif); font-size: 24px; color: var(--peach); font-style: italic; position: relative; }
+.footer-left span { display: block; font-family: var(--mono); font-style: normal; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(238,226,220,0.55); margin-top: 6px; }
+.footer-center { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; line-height: 2; position: relative; }
+.footer-right { font-family: var(--mono); font-size: 11px; text-align: right; line-height: 2; position: relative; }
+.footer-right a { color: var(--peach); text-decoration: none; transition: color 0.2s; }
+.footer-right a:hover { color: var(--bg); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1000px) {
+  .lifecycle { grid-template-columns: 1fr; gap: 24px; }
+  .lc-rail { position: static; flex-direction: row; overflow-x: auto; gap: 8px; padding-bottom: 6px; }
+  .lc-tab { min-width: 210px; }
+}
+@media (max-width: 900px) {
+  nav { padding: 13px 22px; }
+  .nav-links { display: none; }
+  .hero { grid-template-columns: 1fr; padding: 104px 22px 60px; min-height: auto; }
+  .hero-visual { max-width: 460px; }
+  .hero-scroll { display: none; }
+  .arch-flow { grid-template-columns: 1fr 1fr; }
+  .arch-col { border-right: none; border-bottom: 1px solid rgba(186,178,181,0.3); }
+  .arch-col::after { display: none; }
+  .arch-col:nth-child(odd) { border-right: 1px solid rgba(186,178,181,0.3); }
+  .thesis { grid-template-columns: 1fr; }
+  .repos { grid-template-columns: 1fr; }
+  .ci-grid { grid-template-columns: 1fr; }
+  .compare { grid-template-columns: 1fr; }
+  .medal-layer { grid-template-columns: 5px 1fr; gap: 14px; }
+  .medal-name, .medal-dataset { grid-column: 2; }
+  footer { flex-direction: column; text-align: center; }
+  .footer-right { text-align: center; }
+}
+@media (max-width: 560px) {
+  .arch-flow { grid-template-columns: 1fr; }
+  .arch-col:nth-child(odd) { border-right: none; }
+  .hero-stat + .hero-stat { padding-left: 24px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================== NAV ============================== -->
+<nav>
+  <div class="nav-logo">
+    <span class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="0.1"/></svg>
+    </span>
+    Data Infrastructure
+  </div>
+  <ul class="nav-links">
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#pipeline">Lifecycle</a></li>
+    <li><a href="#repos">Repositories</a></li>
+    <li><a href="#data">Data Layers</a></li>
+    <li><a href="#cicd">CI/CD</a></li>
+    <li><a href="#company">At Scale</a></li>
+    <li><a href="#next">Next Steps</a></li>
+  </ul>
+</nav>
+
+<!-- ============================== HERO ============================== -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow reveal">Data Infrastructure · Case Study</div>
+    <h1 class="hero-title reveal d1">
+      A Scalable Data<br>
+      Pipeline <em>Factory</em>
+    </h1>
+    <p class="hero-body reveal d2">
+      A personal ELT platform built to scale. New data sources plug in without touching the
+      existing infrastructure: just write a spider, push the code, and add one YAML entry.
+    </p>
+    <div class="hero-tags reveal d3">
+      <span class="tag navy"><i class="dt"></i>Scrapy</span>
+      <span class="tag navy"><i class="dt"></i>Apache Airflow</span>
+      <span class="tag rasp"><i class="dt"></i>dbt + Cosmos</span>
+      <span class="tag rasp"><i class="dt"></i>Google BigQuery</span>
+      <span class="tag outline"><i class="dt"></i>GitHub Actions</span>
+      <span class="tag outline"><i class="dt"></i>Docker · GHCR</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== CONTENT ============================== -->
+<div class="content">
+
+  <!-- ============= 01 · ARCHITECTURE ============= -->
+  <section class="section" id="architecture">
+    <div class="section-label reveal"><span class="num">01</span> Architecture</div>
+    <h2 class="section-title reveal d1">A config-driven architecture for <em>reusable</em> data pipelines</h2>
+    <p class="section-lead reveal d2">
+      A Data Pipeline Factory split across <b>three connected GitHub repositories</b>, one per layer.
+      Scrapy handles source extraction, Airflow generates pipeline DAGs from YAML config,
+      BigQuery stores raw payloads, and dbt turns them into trusted, typed models across bronze, silver, and gold layers.
+    </p>
+
+    <div class="hla reveal d2">
+      <div class="hla-top">
+        <div class="hla-title">High-Level Architecture</div>
+        <div class="hla-sub">End-to-end data pipeline, from any source to analytics.</div>
+      </div>
+      <div class="hla-row">
+
+        <div class="hla-card" style="--c1:#1B5286;--c2:#0F3460;--ic:#123C69">
+          <span class="hla-tile"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg></span>
+          <span class="hla-name">Any Data Source</span>
+          <span class="hla-desc">API · Website · File · Database</span>
+        </div>
+        <span class="hla-arrow">→</span>
+
+        <div class="hla-card" style="--c1:#3D4E84;--c2:#283F6E;--ic:#2A3A6E">
+          <span class="hla-tile"><svg viewBox="0 0 24 24"><circle cx="12" cy="11" r="3.4"/><path d="M12 4.5V7.6M12 14.4v3.1M5.3 7l2.4 1.6M16.3 13.4l2.4 1.6M18.7 7l-2.4 1.6M7.7 13.4 5.3 15"/></svg></span>
+          <span class="hla-name">Scrapy Spider</span>
+          <span class="hla-desc">Extract raw data (JSON)</span>
+        </div>
+        <span class="hla-arrow">→</span>
+
+        <div class="hla-card" style="--c1:#6B4377;--c2:#463A6B;--ic:#4A3A6B">
+          <span class="hla-tile"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="11" rx="1.5"/><path d="M4 11h16M9 7v11M15 7v11"/></svg></span>
+          <span class="hla-name">Docker Container</span>
+          <span class="hla-desc">Image from GHCR</span>
+        </div>
+        <span class="hla-arrow">→</span>
+
+        <div class="hla-card" style="--c1:#8E3A6E;--c2:#6E2F5E;--ic:#6E2F5E">
+          <span class="hla-tile"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2"/><circle cx="6" cy="17" r="2"/><circle cx="18" cy="12" r="2"/><path d="M8 7.6l8 3.2M8 16.4l8-3.2"/></svg></span>
+          <span class="hla-name">Airflow DAG Factory</span>
+          <span class="hla-desc">Orchestrate pipelines</span>
+        </div>
+        <span class="hla-arrow">→</span>
+
+        <div class="hla-card" style="--c1:#C44D77;--c2:#9E315A;--ic:#9E315A">
+          <span class="hla-tile"><svg viewBox="0 0 24 24"><path d="M5 7v10c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V7"/><ellipse cx="12" cy="7" rx="7" ry="2.5"/><path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/></svg></span>
+          <span class="hla-name">BigQuery (RAW)</span>
+          <span class="hla-desc">Raw JSON landing</span>
+        </div>
+        <span class="hla-arrow">→</span>
+
+        <div class="hla-card" style="--c1:#BE8550;--c2:#A8731F;--ic:#7C5328">
+          <span class="hla-tile"><svg viewBox="0 0 24 24"><path d="M4 5h16l-5.5 7v6L9.5 16v-4z"/></svg></span>
+          <span class="hla-name">dbt Transformations</span>
+          <span class="hla-desc">Bronze · Silver · Gold</span>
+        </div>
+        <span class="hla-arrow">→</span>
+
+        <div class="hla-card" style="--c1:#D49B3C;--c2:#A8731F;--ic:#8C5E14">
+          <span class="hla-tile"><svg viewBox="0 0 24 24"><path d="M4 19h16M7 19v-7M12 19V6M17 19v-9"/></svg></span>
+          <span class="hla-name">Gold / BI / AI</span>
+          <span class="hla-desc">Analytics-ready data</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="add-source reveal d2">
+      <div class="add-source-head">Adding a new data source takes four steps</div>
+      <ol class="add-source-steps">
+        <li>
+          <span class="as-n">1</span>
+          <span class="as-t">Write the spider in the <b>Scrapers</b> repo under <code>scraper/spiders/api_spiders/</code> or <code>scraper/spiders/html_spiders/</code></span>
+        </li>
+        <li>
+          <span class="as-n">2</span>
+          <span class="as-t">Push to <b>main</b>: GitHub Actions automatically builds a new Docker image and pushes it to GHCR</span>
+        </li>
+        <li>
+          <span class="as-n">3</span>
+          <span class="as-t">Build the <b>dbt</b> models in the dbt repo: bronze, silver, and gold layers</span>
+        </li>
+        <li>
+          <span class="as-n">4</span>
+          <span class="as-t">Add one entry to <code>spiders_config.yaml</code> in the <b>Airflow</b> repo</span>
+        </li>
+      </ol>
+    </div>
+
+  </section>
+
+  <!-- ============= 02 · EXECUTION LIFECYCLE ============= -->
+  <section class="section" id="pipeline">
+    <div class="section-label reveal"><span class="num">02</span> Execution Lifecycle</div>
+    <h2 class="section-title reveal d1">How a scheduled run moves from <em>extraction to transformation</em></h2>
+    <p class="section-lead reveal d2">
+      On each scheduled run, Airflow launches source-specific ingestion DAGs, waits for successful completion,
+      then runs dbt through Cosmos so every transformation model appears as its own observable task.
+      Step through the six stages below.
+    </p>
+
+    <div class="lifecycle reveal d2">
+      <div class="lc-rail">
+        <button class="lc-tab"><span class="lcn">01</span><span class="lct">Scheduler fires spider DAGs</span></button>
+        <button class="lc-tab"><span class="lcn">02</span><span class="lct">Pull latest image from GHCR</span></button>
+        <button class="lc-tab"><span class="lcn">03</span><span class="lct">Spider fetches source data</span></button>
+        <button class="lc-tab"><span class="lcn">04</span><span class="lct">Batch load into BigQuery</span></button>
+        <button class="lc-tab"><span class="lcn">05</span><span class="lct">Sensors wait for success</span></button>
+        <button class="lc-tab"><span class="lcn">06</span><span class="lct">Cosmos renders dbt tasks</span></button>
+      </div>
+
+      <div class="lc-panels">
+        <div class="lc-panel">
+          <div class="pn">Stage 01 · Orchestration</div>
+          <h3 class="ph">Airflow scheduler fires the spider DAGs</h3>
+          <p class="pp">Airflow reads <code>spiders_config.yaml</code> and generates one independent DAG per spider automatically. No DAG files are written manually. Because each DAG is fully independent, a failure in one source does not affect the others. The same factory pattern works for any new source added to the config.</p>
+          <div class="lc-chips">
+            <span class="chip navy"><i class="dt"></i>Apache Airflow</span>
+            <span class="chip rasp"><i class="dt"></i>Astronomer Astro</span>
+            <span class="chip navy"><i class="dt"></i>spiders_config.yaml</span>
+          </div>
+        </div>
+
+        <div class="lc-panel">
+          <div class="pn">Stage 02 · Containerisation</div>
+          <h3 class="ph">DockerOperator pulls the latest image from GHCR</h3>
+          <p class="pp">Airflow runs each spider inside a Docker container using the latest scraper image from GHCR. This keeps orchestration cleanly separate from extraction code, and makes scraper updates available without touching any DAG files.</p>
+          <div class="lc-chips">
+            <span class="chip navy"><i class="dt"></i>DockerOperator</span>
+            <span class="chip rasp"><i class="dt"></i>GHCR</span>
+            <span class="chip navy"><i class="dt"></i>force_pull=True</span>
+          </div>
+        </div>
+
+        <div class="lc-panel">
+          <div class="pn">Stage 03 · Extraction</div>
+          <h3 class="ph">Spider fetches data from the source</h3>
+          <p class="pp">Each spider targets one endpoint and writes to the same <code>ScrapedItem</code> schema regardless of source. Credentials are passed via environment variables, never hardcoded. The raw payload is stored as a JSON string in the <code>data</code> field so the warehouse schema stays stable as sources evolve.</p>
+          <div class="lc-chips">
+            <span class="chip navy"><i class="dt"></i>ScrapedItem</span>
+            <span class="chip rasp"><i class="dt"></i>api_spiders</span>
+            <span class="chip navy"><i class="dt"></i>environment variables</span>
+          </div>
+        </div>
+
+        <div class="lc-panel">
+          <div class="pn">Stage 04 · Storage</div>
+          <h3 class="ph">BigQuery pipeline batch-loads the raw data</h3>
+          <p class="pp">When a spider finishes, buffered items are loaded to BigQuery in a single batch job, compatible with the free tier. Write mode is configurable per source: <code>WRITE_TRUNCATE</code> replaces the table on each run and is used when only the latest snapshot is needed. <code>WRITE_APPEND</code> accumulates rows over time and is used when historical data matters. Tables and datasets are created automatically on first run.</p>
+          <div class="lc-chips">
+            <span class="chip navy"><i class="dt"></i>batch load · free tier</span>
+            <span class="chip rasp"><i class="dt"></i>WRITE_TRUNCATE</span>
+            <span class="chip navy"><i class="dt"></i>auto-create tables</span>
+          </div>
+        </div>
+
+        <div class="lc-panel">
+          <div class="pn">Stage 05 · Coordination</div>
+          <h3 class="ph">ExternalTaskSensors wait for all spiders to succeed</h3>
+          <p class="pp">Before transformations run, sensors confirm that the required ingestion DAGs succeeded for the same logical date. This prevents dbt from ever transforming incomplete or stale source data.</p>
+          <div class="lc-chips">
+            <span class="chip navy"><i class="dt"></i>ExternalTaskSensor</span>
+            <span class="chip rasp"><i class="dt"></i>mode=reschedule</span>
+            <span class="chip navy"><i class="dt"></i>poke_interval=60s</span>
+          </div>
+        </div>
+
+        <div class="lc-panel">
+          <div class="pn">Stage 06 · Transformation</div>
+          <h3 class="ph">Cosmos renders each dbt model as its own Airflow task</h3>
+          <p class="pp">Cosmos parses the dbt project and renders each model as its own Airflow task. The full dbt dependency graph shows up directly in Airflow, making model-level failures easy to isolate and retry.</p>
+          <div class="lc-chips">
+            <span class="chip navy"><i class="dt"></i>Astro Cosmos</span>
+            <span class="chip rasp"><i class="dt"></i>DbtTaskGroup</span>
+            <span class="chip navy"><i class="dt"></i>DbtRunLocalOperator</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= 03 · REPOSITORIES ============= -->
+  <section class="section" id="repos">
+    <div class="section-label reveal"><span class="num">03</span> Repositories</div>
+    <h2 class="section-title reveal d1">Repository separation by <em>responsibility</em></h2>
+    <p class="section-lead reveal d2">
+      Each repository owns a specific layer of the system: extraction, orchestration, or transformation.
+      This separation means updating a spider never requires touching Airflow or dbt code, and updating a dbt model never
+      triggers a Docker rebuild. Deployment boundaries stay clean, and each repo can be versioned, tested, and deployed independently.
+    </p>
+
+    <div class="repos">
+      <div class="repo reveal d1">
+        <div class="repo-stripe navy"></div>
+        <div class="repo-inner">
+          <div class="repo-icon-row">
+            <div class="repo-icon2 n"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="11" r="3.4"/><path d="M12 4.5V7.6M12 14.4v3.1M5.3 7l2.4 1.6M16.3 13.4l2.4 1.6M18.7 7l-2.4 1.6M7.7 13.4 5.3 15"/></svg></div>
+            <div class="repo-url">github.com/MadeleineHJ/scrapers</div>
+          </div>
+          <div class="repo-name2">Scrapers</div>
+          <p class="repo-desc2">The only place spider code lives. Every push to main triggers CI/CD that rebuilds the Docker image and pushes it to GHCR.</p>
+          <div class="repo-rule">
+            <svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>
+            Spiders live here, nowhere else
+          </div>
+          <div class="repo-files2">
+            <div class="repo-file2 key"><span class="dot"></span>scraper/spiders/api_spiders/</div>
+            <div class="repo-file2 key"><span class="dot"></span>scraper/pipelines/bigquery_pipeline.py</div>
+            <div class="repo-file2 key"><span class="dot"></span>scraper/items.py</div>
+            <div class="repo-file2 key"><span class="dot"></span>Dockerfile</div>
+            <div class="repo-file2 key"><span class="dot"></span>.github/workflows/ci.yml</div>
+            <div class="repo-file2"><span class="dot"></span>scraper/settings.py</div>
+            <div class="repo-file2"><span class="dot"></span>entrypoint.sh</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="repo reveal d2">
+        <div class="repo-stripe rasp"></div>
+        <div class="repo-inner">
+          <div class="repo-icon-row">
+            <div class="repo-icon2 r"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></div>
+            <div class="repo-url">github.com/MadeleineHJ/airflow</div>
+          </div>
+          <div class="repo-name2">Airflow</div>
+          <p class="repo-desc2">Orchestration only. No spider code ever lives here. Adding a new pipeline requires changing exactly one file.</p>
+          <div class="repo-rule">
+            <svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>
+            One YAML entry = one full pipeline DAG
+          </div>
+          <div class="repo-files2">
+            <div class="repo-file2 key"><span class="dot"></span>dags/factories/scrapers/dag_factory.py</div>
+            <div class="repo-file2 key"><span class="dot"></span>dags/factories/scrapers/spiders_config.yaml</div>
+            <div class="repo-file2"><span class="dot"></span>docker-compose.override.yml</div>
+            <div class="repo-file2"><span class="dot"></span>airflow_settings.yaml</div>
+            <div class="repo-file2"><span class="dot"></span>Dockerfile (Astro runtime)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="repo reveal d3">
+        <div class="repo-stripe dual"></div>
+        <div class="repo-inner">
+          <div class="repo-icon-row">
+            <div class="repo-icon2 d"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16l-5.5 7v6L9.5 16v-4z"/></svg></div>
+            <div class="repo-url">github.com/MadeleineHJ/dbt</div>
+          </div>
+          <div class="repo-name2">dbt Project</div>
+          <p class="repo-desc2">All transformation logic. Reads raw JSON from BigQuery and produces clean, typed tables through a medallion architecture.</p>
+          <div class="repo-rule">
+            <svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>
+            Raw JSON in → typed models out
+          </div>
+          <div class="repo-files2">
+            <div class="repo-file2 key"><span class="dot"></span>models/bronze_layer/bronze_football/</div>
+            <div class="repo-file2 key"><span class="dot"></span>models/silver_layer/silver_football/</div>
+            <div class="repo-file2 key"><span class="dot"></span>macros/flatten_json.sql</div>
+            <div class="repo-file2"><span class="dot"></span>models/marts/football/ (planned)</div>
+            <div class="repo-file2"><span class="dot"></span>dbt_project.yml</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= 04 · DATA LAYERS ============= -->
+  <section class="section" id="data">
+    <div class="section-label reveal"><span class="num">04</span> Data Layers</div>
+    <h2 class="section-title reveal d1">Medallion architecture, from <em>raw data to analytics-ready</em> models</h2>
+    <p class="section-lead reveal d2">
+      Every source follows the same modelling pattern. Raw payloads land first, then dbt progressively
+      parses, types, cleans, and organises the data for analysis.
+      Each layer has a clear contract: raw data lands untouched, bronze adds structure, silver adds trust, and gold adds business meaning.
+    </p>
+
+    <div class="medallion">
+      <div class="medal-layer raw reveal d1">
+        <div class="medal-bar raw"></div>
+        <div class="medal-name"><span class="mdot"></span>Raw</div>
+        <div class="medal-body">
+          <div class="medal-title2">Scrapers dataset · unmodified JSON</div>
+          <div class="medal-desc2">Every spider writes to the same raw schema regardless of source. The original payload is preserved as a JSON string in the <code>data</code> field, keeping ingestion flexible while standardising the warehouse landing structure.</div>
+          <div class="schema-fields">
+            <code>run_id</code><code>extraction_type</code><code>data</code><code>execution_date</code><code>start_date</code><code>end_date</code><code>endpoint</code>
+          </div>
+        </div>
+        <div class="medal-dataset">scrapers.*</div>
+      </div>
+
+      <div class="medal-layer bronze reveal d1">
+        <div class="medal-bar bronze"></div>
+        <div class="medal-name"><span class="mdot"></span>Bronze</div>
+        <div class="medal-body">
+          <div class="medal-title2">Bronze layer · parsed &amp; typed</div>
+          <div class="medal-desc2">Parses raw payloads into structured, typed columns using a reusable <code>flatten_json</code> macro. No business logic is applied here.</div>
+        </div>
+        <div class="medal-dataset">brz_football.*</div>
+      </div>
+
+      <div class="medal-layer silver reveal d2">
+        <div class="medal-bar silver"></div>
+        <div class="medal-name"><span class="mdot"></span>Silver</div>
+        <div class="medal-body">
+          <div class="medal-title2">Silver layer · clean &amp; business-ready</div>
+          <div class="medal-desc2">Cleans, deduplicates, and applies business rules to the Bronze data to produce analysis-ready models, structured as fact and dimension tables where applicable.</div>
+        </div>
+        <div class="medal-dataset">slv_football.*</div>
+      </div>
+
+      <div class="medal-layer gold reveal d2">
+        <div class="medal-bar gold"></div>
+        <div class="medal-name"><span class="mdot"></span>Gold</div>
+        <div class="medal-body">
+          <div class="medal-title2">Gold / Marts layer · aggregated for BI</div>
+          <div class="medal-desc2">The Gold layer holds aggregated, business-ready models for dashboards, KPIs, and advanced use cases.</div>
+        </div>
+        <div class="medal-dataset">gld_football.*</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= 05 · CI/CD ============= -->
+  <section class="section" id="cicd">
+    <div class="section-label reveal"><span class="num">05</span> CI/CD</div>
+    <h2 class="section-title reveal d1">Automated from <em>code to container</em></h2>
+    <p class="section-lead reveal d2">
+      Every push to the scrapers main branch triggers a two-job GitHub Actions workflow.
+      No manual Docker commands, no manual deployments. The image is always in sync with the code.
+    </p>
+
+    <div class="ci-grid reveal d2">
+      <div class="ci-card">
+        <div class="ci-head navy">
+          <div>
+            <div class="badge">Job 1</div>
+            <div class="h">Test</div>
+          </div>
+          <span class="ico"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M8 14h8"/></svg></span>
+        </div>
+        <div class="ci-body">
+          <div class="ci-step"><span class="si">1</span><span class="st">Set up Python 3.11 on ubuntu-latest</span></div>
+          <div class="ci-step"><span class="si">2</span><span class="st"><code>pip install -r requirements.txt</code></span></div>
+          <div class="ci-step"><span class="si">3</span><span class="st">Create a dummy <code>.env</code> for CI, no real credentials needed</span></div>
+          <div class="ci-step"><span class="si">4</span><span class="st"><code>scrapy check</code> validates all spider class definitions</span></div>
+          <div class="ci-step"><span class="si">5</span><span class="st"><code>pytest tests/</code> runs unit tests for items and settings</span></div>
+          <div class="ci-runs">Runs on · pull_request + push to main</div>
+        </div>
+      </div>
+
+      <div class="ci-card">
+        <div class="ci-head rasp">
+          <div>
+            <div class="badge">Job 2</div>
+            <div class="h">Build &amp; Push</div>
+          </div>
+          <span class="ico"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8.5 12 4l9 4.5-9 4.5z"/><path d="M3 8.5V16l9 4.5 9-4.5V8.5"/><path d="M12 13v7.5"/></svg></span>
+        </div>
+        <div class="ci-body">
+          <div class="ci-step"><span class="si">1</span><span class="st">Log in to GHCR using the built-in <code>GITHUB_TOKEN</code>, no secrets to configure</span></div>
+          <div class="ci-step"><span class="si">2</span><span class="st"><code>docker build</code> packages scraper code + entrypoint.sh</span></div>
+          <div class="ci-step"><span class="si">3</span><span class="st"><code>docker push</code> to ghcr.io/madeleinehj/scrapers:latest</span></div>
+          <div class="ci-step"><span class="si">4</span><span class="st">Next Airflow run pulls the updated image automatically via <code>force_pull=True</code></span></div>
+          <div class="ci-runs">Runs on · push to main only</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout2 reveal d2">
+      <svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
+      <div>
+        <strong>No manual deployment step.</strong>
+        <span class="flow-line"> write spider → git push → Actions builds the image → next Airflow run pulls the container.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= 06 · AT COMPANY SCALE ============= -->
+  <section class="section" id="company">
+    <div class="section-label reveal"><span class="num">06</span> At Company Scale</div>
+    <h2 class="section-title reveal d1">What changes when this goes to <em>production</em></h2>
+    <p class="section-lead reveal d2">
+      The portfolio version keeps costs at zero while preserving the exact architectural patterns used in production systems.
+      The config-driven DAG factory, the unified ScrapedItem schema, the medallion data model, the CI/CD image build on every push,
+      and the sensor-gated dbt runs are all identical. What changes is purely the underlying infrastructure: managed cloud services
+      replace local tools, but every engineering decision remains the same.
+    </p>
+
+    <div class="compare">
+      <div class="compare-panel cost-portfolio reveal d1">
+        <div class="compare-head">
+          <span class="compare-badge2 portfolio">Portfolio</span>
+          <span class="compare-panel-title">Local / Free Tier</span>
+        </div>
+        <div class="compare-item"><div class="ci-label">Image Registry</div><div class="ci-val"><strong>GitHub Container Registry</strong>, free for public repos, auto-auth via GITHUB_TOKEN</div></div>
+        <div class="compare-item"><div class="ci-label">Container Runner</div><div class="ci-val"><strong>Docker Desktop</strong> via DockerOperator, runs containers on the local machine</div></div>
+        <div class="compare-item"><div class="ci-label">Airflow</div><div class="ci-val"><strong>Astronomer Astro</strong> local, <code>astro dev start</code> on a laptop</div></div>
+        <div class="compare-item"><div class="ci-label">Data Landing</div><div class="ci-val"><strong>Direct to BigQuery</strong>, batch load from in-memory buffer</div></div>
+        <div class="compare-item"><div class="ci-label">Auth</div><div class="ci-val"><strong>Service account JSON</strong>, bind-mounted into the Docker container</div></div>
+        <div class="compare-item"><div class="ci-label">Secrets</div><div class="ci-val"><strong>.env + Airflow Variables</strong>, stored locally</div></div>
+        <div class="compare-item"><div class="ci-label">dbt</div><div class="ci-val"><strong>Cosmos DbtTaskGroup</strong> with DbtRunLocalOperator</div></div>
+        <div class="compare-item"><div class="ci-label">Environments</div><div class="ci-val">Single, dev only</div></div>
+        <div class="compare-item"><div class="ci-label">Cost</div><div class="ci-val"><strong>$0</strong>, entirely free tier</div></div>
+      </div>
+
+      <div class="compare-panel reveal d2">
+        <div class="compare-head">
+          <span class="compare-badge2 company">Company</span>
+          <span class="compare-panel-title">Production / GCP</span>
+        </div>
+        <div class="compare-item"><div class="ci-label">Image Registry</div><div class="ci-val"><strong>Google Artifact Registry</strong>, private, IAM-controlled, regional replication</div></div>
+        <div class="compare-item"><div class="ci-label">Container Runner</div><div class="ci-val"><strong>Google Kubernetes Engine</strong> via KubernetesPodOperator, ephemeral pods, resource limits, auto-scaling</div></div>
+        <div class="compare-item"><div class="ci-label">Airflow</div><div class="ci-val"><strong>Cloud Composer</strong> or self-hosted on GKE, high availability, auto-scaling workers</div></div>
+        <div class="compare-item"><div class="ci-label">Data Landing</div><div class="ci-val"><strong>GCS bucket → BigQuery load job</strong>, files preserved for reprocessing</div></div>
+        <div class="compare-item"><div class="ci-label">Auth</div><div class="ci-val"><strong>Workload Identity</strong>, pods authenticate via service account binding, zero key files</div></div>
+        <div class="compare-item"><div class="ci-label">Secrets</div><div class="ci-val"><strong>Google Secret Manager</strong>, versioned, audit-logged, injected at runtime</div></div>
+        <div class="compare-item"><div class="ci-label">dbt</div><div class="ci-val"><strong>Custom dbt task-group helper</strong>, supports VIRTUALENV and KUBERNETES execution modes</div></div>
+        <div class="compare-item"><div class="ci-label">Environments</div><div class="ci-val">dev / nprd / prod, environment-aware via get_config_for_environment()</div></div>
+        <div class="compare-item"><div class="ci-label">Cost</div><div class="ci-val">GKE + Composer + GAR + Secret Manager, managed monthly GCP spend</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= 07 · NEXT STEPS ============= -->
+  <section class="section" id="next">
+    <div class="section-label reveal"><span class="num">07</span> Next Steps</div>
+    <h2 class="section-title reveal d1">Where this platform goes <em>next</em></h2>
+    <p class="section-lead reveal d2">
+      Two enhancements that extend the same config-driven philosophy from ingestion into
+      observability, catching data issues automatically and surfacing pipeline health at a glance.
+    </p>
+
+    <div class="next-grid">
+      <div class="next-card reveal d1">
+        <div class="next-num">01</div>
+        <div class="next-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <h3 class="next-h">Data Quality Check System</h3>
+        <p class="next-p">Using dbt tests to automatically detect data issues at every layer. When a test fails, Airflow catches it and sends a Slack notification to the responsible team with the exact problem and the steps needed to fix it.</p>
+        <div class="lc-chips">
+          <span class="chip navy"><i class="dt"></i>dbt tests</span>
+          <span class="chip rasp"><i class="dt"></i>Airflow callbacks</span>
+          <span class="chip navy"><i class="dt"></i>Slack alerts</span>
+        </div>
+      </div>
+
+      <div class="next-card reveal d2">
+        <div class="next-num">02</div>
+        <div class="next-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M4 19h16"/><rect x="6" y="11" width="3" height="6" rx="1"/><rect x="11" y="7" width="3" height="10" rx="1"/><rect x="16" y="13" width="3" height="4" rx="1"/></svg></div>
+        <h3 class="next-h">Pipeline Monitoring Dashboard</h3>
+        <p class="next-p">A real-time dashboard tracking pipeline health across all sources: last successful run, row counts, data freshness, and failure history. Built on top of Airflow metadata and BigQuery audit logs, giving full visibility without opening the Airflow UI.</p>
+        <div class="lc-chips">
+          <span class="chip navy"><i class="dt"></i>Airflow metadata</span>
+          <span class="chip rasp"><i class="dt"></i>BigQuery audit logs</span>
+          <span class="chip navy"><i class="dt"></i>data freshness</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============================== FOOTER ============================== -->
+<footer>
+  <div class="footer-left">
+    Madeleine Hammad
+    <span>Data Infrastructure Portfolio</span>
+  </div>
+  <div class="footer-center">
+    Scrapy · Airflow · dbt · BigQuery<br>
+    Config-Driven ELT Platform
+  </div>
+  <div class="footer-right">
+    May 2026<br>
+    <a href="https://github.com/MadeleineHJ" target="_blank" rel="noopener">github.com/MadeleineHJ</a>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   Data Pipeline Factory — motion & interaction
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ---- Scroll reveals ---- */
+  const reveals = document.querySelectorAll('.reveal');
+  const revealAll = () => reveals.forEach((el) => el.classList.add('in'));
+
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    reveals.forEach((el) => io.observe(el));
+
+    // Fallback: in some embedding contexts (e.g. preview iframes) IO never
+    // fires intersecting. Guarantee content is visible regardless.
+    window.addEventListener('load', () => setTimeout(revealAll, 450), { once: true });
+    setTimeout(revealAll, 1200);
+  } else {
+    revealAll();
+  }
+
+  /* ---- Nav shrink + active section ---- */
+  const nav = document.querySelector('nav');
+  const links = [...document.querySelectorAll('.nav-links a')];
+  const sections = links
+    .map((a) => document.querySelector(a.getAttribute('href')))
+    .filter(Boolean);
+
+  function onScroll() {
+    nav.classList.toggle('scrolled', window.scrollY > 24);
+    let current = sections[0];
+    const mid = window.scrollY + window.innerHeight * 0.32;
+    for (const s of sections) { if (s.offsetTop <= mid) current = s; }
+    links.forEach((a) => a.classList.toggle('active', current && a.getAttribute('href') === '#' + current.id));
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---- Hero pipeline: travelling highlight ---- */
+  const nodes = [...document.querySelectorAll('.pnode')];
+  const conns = [...document.querySelectorAll('.pconn')];
+  let step = 0;
+  function pulse() {
+    nodes.forEach((n, i) => n.classList.toggle('lit', i === step));
+    conns.forEach((c) => c.classList.remove('flow'));
+    if (conns[step]) {
+      void conns[step].offsetWidth;
+      conns[step].classList.add('flow');
+    }
+    step = (step + 1) % nodes.length;
+  }
+  if (nodes.length) {
+    pulse();
+    setInterval(pulse, 1600);
+  }
+
+  /* ---- Lifecycle stepper ---- */
+  const tabs = [...document.querySelectorAll('.lc-tab')];
+  const panels = [...document.querySelectorAll('.lc-panel')];
+  function showPanel(idx) {
+    tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+    panels.forEach((p, i) => p.classList.toggle('show', i === idx));
+  }
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => showPanel(i));
+    t.addEventListener('mouseenter', () => showPanel(i));
+  });
+  if (tabs.length) showPanel(0);
+})();
+
+</script>
+</body>
+</html>
