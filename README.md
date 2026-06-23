@@ -66,7 +66,7 @@ airflow/                           # github.com/MadeleineHJ/airflow
 ├── docker-compose.override.yml    # mounts dbt project into container
 └── requirements.txt
 
-madeleine-portfolio/                # github.com/MadeleineHJ/dbt
+dbt/                # github.com/MadeleineHJ/dbt
 ├── data_transformation/
 │   ├── dbt_project.yml
 │   ├── macros/
