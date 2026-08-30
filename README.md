@@ -89,7 +89,39 @@ dbt/                # github.com/MadeleineHJ/dbt
 
 ## How the repos connect
 
-The three repos never import from each other — nothing in one repo references code in another. They're linked through two runtime contracts instead:
+The three repos never import from each other — nothing in one repo references code in another. They're linked through runtime contracts instead: a Docker image, a bind mount, and a shared BigQuery schema.
+
+```mermaid
+flowchart LR
+    subgraph SCRAPERS["scrapers repo"]
+        SPIDER["Scrapy spiders"]
+    end
+
+    subgraph AIRFLOW["airflow repo"]
+        FACTORY["dag_factory.py<br/>+ spiders_config.yaml"]
+        COSMOS["Cosmos DbtTaskGroup"]
+    end
+
+    subgraph DBT["dbt repo (data_transformation)"]
+        MODELS["bronze / silver models"]
+    end
+
+    GHCR[("GHCR image<br/>ghcr.io/madeleinehj/scrapers")]
+    BQ[("BigQuery<br/>scrapers.* tables")]
+
+    SPIDER -- "CI builds & pushes" --> GHCR
+    FACTORY -- "DockerOperator pulls & runs" --> GHCR
+    GHCR -- "BigQueryPipeline writes rows" --> BQ
+    BQ -- "read as dbt source" --> MODELS
+    DBT -- "bind-mounted into container" --> COSMOS
+    COSMOS -- "parses project, runs models" --> MODELS
+    FACTORY -- "spider Asset ready<br/>triggers dbt DAG" --> COSMOS
+
+    classDef repo fill:#eef5ff,stroke:#3b6ea5,color:#1a2b3c;
+    classDef infra fill:#fff3e0,stroke:#b5793a,color:#3c2b1a;
+    class SPIDER,FACTORY,COSMOS,MODELS repo;
+    class GHCR,BQ infra;
+```
 
 **scrapers → BigQuery → dbt: a schema contract, not a dependency.** Every spider writes to `scrapers.<spider_name>` in BigQuery using the same seven-field `ScrapedItem` schema (`items.py`). dbt's `_sources.yml` declares those same tables as sources and unpacks them in the bronze layer via the `flatten_json` macro. Neither repo references the other's code — the raw JSON schema *is* the interface, so either side can change independently as long as it holds.
 
