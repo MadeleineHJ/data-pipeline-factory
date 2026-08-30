@@ -87,6 +87,18 @@ dbt/                # github.com/MadeleineHJ/dbt
 └── README.md
 ```
 
+## How the repos connect
+
+The three repos never import from each other — nothing in one repo references code in another. They're linked through two runtime contracts instead:
+
+**scrapers → BigQuery → dbt: a schema contract, not a dependency.** Every spider writes to `scrapers.<spider_name>` in BigQuery using the same seven-field `ScrapedItem` schema (`items.py`). dbt's `_sources.yml` declares those same tables as sources and unpacks them in the bronze layer via the `flatten_json` macro. Neither repo references the other's code — the raw JSON schema *is* the interface, so either side can change independently as long as it holds.
+
+**airflow → scrapers: a Docker image, not a checkout.** `dag_factory.py`'s spider DAGs run `ghcr.io/madeleinehj/scrapers:latest` via `DockerOperator` — the exact image the scrapers repo's own CI builds and pushes on every merge to `main`. Airflow only needs the image tag and the spider name; it never sees the scrapers repo's source.
+
+**airflow → dbt: a filesystem mount, not an image.** Unlike the scraper, the dbt project isn't containerised — `docker-compose.override.yml` bind-mounts the dbt repo straight into the Airflow containers, and Cosmos (`DbtTaskGroup`) parses it directly at DAG-parse time. A dbt model change is live on the next DAG parse; no image rebuild, no CI run required.
+
+**Sequencing across repos: Airflow Assets, not a fixed schedule.** Each spider task declares an output `Asset`; the dbt DAG's schedule is the list of all three spider assets. Once every asset has updated since dbt's last run, Airflow triggers it automatically. The handoff between "scraping finished" and "transform" lives entirely in Airflow's own scheduler — neither of the other repos knows the other exists.
+
 ## Phase-by-phase summary
 
 | Phase | Layer | Deliverable |
@@ -94,7 +106,7 @@ dbt/                # github.com/MadeleineHJ/dbt
 | 1 | Ingestion | Spiders writing a unified raw schema to BigQuery, one table per source |
 | 2 | Containerisation | Dockerfile + entrypoint.sh, image published to GHCR on every push to main |
 | 3 | Orchestration | Config-driven DAG factory generating one DAG per spider plus one dbt DAG per pipeline |
-| 4 | Coordination | ExternalTaskSensors gating dbt runs on successful spider completion |
+| 4 | Coordination | Airflow Assets gating dbt runs on all spiders producing fresh output |
 | 5 | Bronze | JSON flattened into typed columns via a reusable `flatten_json` macro, per source |
 | 6 | Silver | Cleaned, deduplicated, business-rule models, with `scd_type2` available for slowly changing dimensions |
 | 7 | Quality | Generic and singular dbt tests organised per source |
@@ -112,7 +124,7 @@ dbt/                # github.com/MadeleineHJ/dbt
 
 - **Configurable write disposition per source.** `WRITE_TRUNCATE` is used for snapshot-style data like weekly standings where only the latest state matters. `WRITE_APPEND` is reserved for sources where historical accumulation matters. The choice is a one-line setting on the BigQuery pipeline class, not a structural change.
 
-- **Sensors before transformation, not a fixed delay.** The dbt DAG does not assume spiders finished in time — `ExternalTaskSensor` tasks confirm each spider DAG succeeded for the same logical date before any dbt model runs. This prevents dbt from ever transforming incomplete or stale source data.
+- **Asset-triggered transformation, not a fixed delay or a logical-date sensor.** The dbt DAG doesn't run on its own cron — it's scheduled on the three spider output `Asset`s and fires once all of them have updated since its last run. An earlier version used `ExternalTaskSensor` to match spider and dbt runs by logical date, but the two DAGs run on offset schedules, so their logical dates never actually lined up — the sensor would poll for an hour and time out on every run. Asset-based scheduling has no notion of logical date to match, so it isn't susceptible to that class of bug.
 
 - **Cosmos over a single dbt command.** Astro Cosmos renders each dbt model as its own Airflow task rather than running `dbt run` as one opaque step. A failed model can be retried individually, and the dbt dependency graph is visible directly in the Airflow UI.
 
@@ -167,7 +179,7 @@ Expected: bronze and silver tables populated in `brz_football` and `slv_football
 - Config-driven DAG factory pattern (Airflow)
 - Source-agnostic ingestion design (unified raw schema)
 - Containerised extraction with automated CI/CD (Docker, GHCR, GitHub Actions)
-- Cross-DAG coordination (ExternalTaskSensor)
+- Cross-DAG coordination (Airflow Assets)
 - dbt-as-tasks orchestration (Astro Cosmos)
 - Medallion architecture (bronze/silver/gold)
 - Reusable dbt macros for dynamic JSON parsing and SCD Type 2
